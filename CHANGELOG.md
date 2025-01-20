@@ -1,3 +1,7 @@
+## 0.3.2
+* fix: improve error handling when `clear`ing an indexedDB store
+* fix: improve error messaging for syncing errors and remove automatic reloading of the page
+
 ## 0.3.1
 * fix: loading offline data early in the startup process
 * fix: infinite page reloading when making changes to the offline collections
