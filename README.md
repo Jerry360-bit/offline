@@ -94,11 +94,11 @@ const config = {
   keepAll: true, // keep data for offline use for all collections using the global filter, sort, limit. to keep data for only certain collections, set this to false and then use collection.keep() for the collections you want to use offline.
   autoSync: true, // auto sync changes made offline when the user comes back online
   handleSyncErrors: ({ replayErrors, keepErrors }) => {
-    if (replayErrors) console.error(replayErrors); // if there are errors when the Meteor methods are replayed, they will be in array here with the name of the method, the method's args, and the error itself. you can use it to alert your user, attempt a retry, logging purposes, etc.
+    if (replayErrors) console.error('replay', replayErrors); // if there are errors when the Meteor methods are replayed, they will be in array here with the name of the method, the method's args, and the error itself. you can use it to alert your user, logging purposes, etc.
 
     if (keepErrors) { // when syncing, if you're using a .keep filter or you have a global filter in the config that isn't an empty object, and there are errors reconciling with the server, they will be in an array here with the name of the collection and the error itself. you can customize how you handle these. by default, we clear the offline database for the collection since it could have stale data and reload the page.
-      keepErrors.map(({ name }) => clear(name));
-      window.location.reload();
+      await Promise.allSettled(keepErrors.map(({ name }) => clear(name)));
+      console.error('keep', keepErrors)
     }
 
     return;
