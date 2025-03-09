@@ -1,3 +1,7 @@
+## 0.4.0
+* feat: support using an `archive` collection instead of `soft delete` for reconciliation
+* feat: support for `jam:archive`
+
 ## 0.3.3
 * fix: reconciling with the server when a new collection is added after initial set up
 
