@@ -1,3 +1,6 @@
+## 0.4.1
+* fix: DDP message handling due to Meteor internal changes
+
 ## 0.4.0
 * feat: support using an `archive` collection instead of `soft delete` for reconciliation
 * feat: support for `jam:archive`
