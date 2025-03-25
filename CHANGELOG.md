@@ -1,3 +1,13 @@
+## 0.4.1
+* fix: DDP message handling due to Meteor internal changes
+
+## 0.4.0
+* feat: support using an `archive` collection instead of `soft delete` for reconciliation
+* feat: support for `jam:archive`
+
+## 0.3.3
+* fix: reconciling with the server when a new collection is added after initial set up
+
 ## 0.3.2
 * fix: improve error handling when `clear`ing an indexedDB store
 * fix: improve error messaging for syncing errors and remove automatic reloading of the page

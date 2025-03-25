@@ -69,6 +69,12 @@ export declare const Offline: {
       replayErrors?: any[];
       keepErrors?: { name: string }[];
     }) => void;
+    archive?: {                       // Archive configuration object (optional)
+      name: string;                   // The name of the archive collection (e.g., 'archives')
+      collectionKey: string;          // The key name used to reference the collection in the archive (e.g. '_collection')
+      primaryIdKey: string;           // The key used to identify the primary id in the archive (e.g. 'id' or 'docId')
+      timestampKey: string;           // The key used to store the timestamp of when the item was archived (e.g. 'archivedAt')
+    };
   };
 
   /**
@@ -87,6 +93,12 @@ export declare const Offline: {
       replayErrors?: any[];
       keepErrors?: { name: string }[];
     }) => void;
+    archive?: {
+      name: string;
+      collectionKey: string;
+      primaryIdKey: string;
+      timestampKey: string;
+    };
   }>) => {
     filter?: Record<string, any>;
     sort?: Record<string, any>;
@@ -97,5 +109,11 @@ export declare const Offline: {
       replayErrors?: any[];
       keepErrors?: { name: string }[];
     }) => void;
+    archive?: {
+      name: string;
+      collectionKey: string;
+      primaryIdKey: string;
+      timestampKey: string;
+    };
   };
 };
