@@ -17,6 +17,29 @@ const applyOptions = {
 
 Meteor.userId = () => '1'; // Mocked
 
+const setDefaultConfig = () => {
+  return Offline.configure({
+    filter: { deleted: false }, // filter the documents to keep across all collections. if you're not using jam:archive, it will assume you're using soft deletes.
+    sort: { updatedAt: -1 }, // keep the most recent documents assuming you have an updatedAt on each doc. if you're using a different field name for timestamps, you'll want to change this.
+    limit: 100, // limit offline documents to a max of 100 for each collection
+    keepAll: true, // keep data for offline use for all collections using the global filter, sort, limit. to keep data for only certain collections, set this to false and then use collection.keep() for the collections you want to use offline.
+    autoSync: true, // auto sync changes made offline when the user comes back online
+    handleSyncErrors: async ({ replayErrors, keepErrors }) => {
+      if (Meteor.isDevelopment) console.info(`[jam:offline] there was an issue with syncing. check the errors below`)
+      if (replayErrors) console.error('replay', replayErrors); // if there are errors when the Meteor methods are replayed, they will be in array here with the name of the method, the method's args, and the error itself. you can use it to alert your user, logging purposes, etc.
+
+      if (keepErrors) { // when syncing, if you're using a .keep filter or you have a global filter in the config that isn't an empty object, and there are errors reconciling with the server, they will be in an array here with the name of the collection and the error itself. you can customize how you handle these. by default, we clear the offline database for the collection since it could have stale data and reload the page.
+        await Promise.allSettled(keepErrors.map(({ name }) => clear(name)));
+        console.error('keep', keepErrors)
+      }
+
+      return;
+    }
+  })
+};
+
+const Archive = new Mongo.Collection('archive');
+
 const Things = new Mongo.Collection('things');
 Things.keep({ text: 'stuff' }, { sort: { createdAt: 1 }, limit: 2 });
 
@@ -122,6 +145,10 @@ const updateDog = async ({ _id, text }) => {
   return Dogs.updateAsync(_id, { $set: { text, createdAt: new Date(), updatedAt: new Date() }});
 }
 
+const removeDog = async ({ _id }) => {
+  return Dogs.removeAsync({ _id });
+}
+
 const insertCar = async ({ text }) => {
   return Cars.insertAsync({ text, createdAt: new Date(), updatedAt: new Date() });
 }
@@ -154,7 +181,7 @@ const updateBook = async ({ _id, title }) => {
   return Books.updateAsync(_id, { $set: { title,  createdAt: new Date(), updatedAt: new Date() }});
 }
 
-Meteor.methods({ insertThing, updateThing, insertNote, updateNote, removeNote, insertDog, upsertDog, updateDog, insertCar, insertOrder, updateOrder, removeOrder, insertItem, updateItem, insertBook, updateBook });
+Meteor.methods({ insertThing, updateThing, insertNote, updateNote, removeNote, insertDog, removeDog, upsertDog, updateDog, insertCar, insertOrder, updateOrder, removeOrder, insertItem, updateItem, insertBook, updateBook });
 
 if (Meteor.isServer) {
   Meteor.methods({ resetThings, resetNotes, resetDogs, resetCars, resetOrders, resetItems, resetBooks })
@@ -431,8 +458,9 @@ if (Meteor.isClient) {
     await Meteor.callAsync('resetNotes');
     await Notes.clear();
 
+    let comp;
     let sub;
-    const comp = Tracker.autorun(computation => {
+    comp = Tracker.autorun(computation => {
       sub = Meteor.subscribe('notes');
     });
 
@@ -656,6 +684,7 @@ if (Meteor.isClient) {
   });
 }
 
+
 Tinytest.add('deepReplace', function (test) {
   // Sample deeply nested object
   const obj1 = {
@@ -742,4 +771,38 @@ Tinytest.add('deepContains', function (test) {
   const deepArrOfObjs = [{ a: [{ b: { c: 3 } }] }, { d: { e: 4 } }];
   test.equal(deepContains(deepArrOfObjs, 3), true);
   test.equal(deepContains(deepArrOfObjs, 5), false);
+});
+
+Tinytest.add('config - default filter should be { deleted: false }', function(test) {
+  const result = Offline.configure({});
+  test.equal(result.filter.deleted, false, 'Default filter should be { deleted: false }');
+  setDefaultConfig();
+});
+
+Tinytest.add('config - custom filter should update the filter property', function(test) {
+  const customFilter = { deleted: true };
+  const result = Offline.configure({ filter: customFilter });
+  test.equal(result.filter.deleted, true, 'Custom filter should override the default filter');
+  setDefaultConfig();
+});
+
+Tinytest.add('config - filter should not change if archive is not provided', function(test) {
+  const result = Offline.configure({ filter: { deleted: true } });
+  test.equal(result.filter.deleted, true, 'Filter should remain unchanged if archive is not provided');
+  setDefaultConfig();
+});
+
+Tinytest.add('config - filter should remain { deleted: false } after archive condition is handled', function(test) {
+  const result = Offline.configure({
+    filter: { deleted: false },
+    archive: { name: 'archive1', collectionKey: 'collection1', primaryIdKey: '_id', timestampKey: 'createdAt' }
+  });
+  test.equal(result.filter.deleted, false);
+  setDefaultConfig();
+});
+
+Tinytest.add('config - filter should remove deleted when archive is provided', function(test) {
+  const result = Offline.configure({ archive: { name: 'archive1', collectionKey: 'collection1', primaryIdKey: '_id', timestampKey: 'createdAt' } });
+  test.equal(result.filter.deleted, undefined);
+  setDefaultConfig();
 });
