@@ -1,8 +1,8 @@
 Package.describe({
-  name: 'jam:offline',
-  version: '0.4.1',
+  name: 'jerry360:offline',
+  version: '0.0.1',
   summary: 'An easy way to give your Meteor app offline capabilities and make it feel instant',
-  git: 'https://github.com/jamauro/offline',
+  git: 'https://github.com/jerry360/offline',
   documentation: 'README.md'
 });
 
